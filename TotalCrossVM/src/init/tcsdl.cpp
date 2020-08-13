@@ -73,6 +73,13 @@ bool TCSDL_Init(ScreenSurface screen, const char* title, bool fullScreen) {
     return false;
   }
 
+  // Get window pixel format
+  Uint32 windowPixelFormat;
+  if (SDL_PIXELFORMAT_UNKNOWN == (windowPixelFormat = SDL_GetWindowPixelFormat(window))) {
+    printf("SDL_GetWindowPixelFormat failed: %s\n", SDL_GetError());
+    return false;
+  }
+
   std::cout << "SDL_RENDER_DRIVER available:";
   for( int i = 0; i < SDL_GetNumRenderDrivers(); ++i ) {
       SDL_RendererInfo info;
@@ -96,13 +103,6 @@ bool TCSDL_Init(ScreenSurface screen, const char* title, bool fullScreen) {
   }
   std::cout << "SDL_RENDER_DRIVER selected : " << rendererInfo.name << '\n';
   
-  // Get window pixel format
-  Uint32 windowPixelFormat;
-  if (SDL_PIXELFORMAT_UNKNOWN == (windowPixelFormat = SDL_GetWindowPixelFormat(window))) {
-    printf("SDL_GetWindowPixelFormat failed: %s\n", SDL_GetError());
-    return false;
-  }
-
   // MUST USE SDL_TEXTUREACCESS_STREAMING, CANNOT BE REPLACED WITH SDL_CreateTextureFromSurface
   if (IS_NULL(texture = SDL_CreateTexture(
                               renderer, 
