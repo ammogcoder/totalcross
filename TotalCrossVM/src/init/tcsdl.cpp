@@ -15,6 +15,8 @@
 
 static SDL_Renderer *renderer;
 static SDL_Texture *texture;
+static SDL_Window *window; 
+static SDL_Surface *surface;
 static bool usesTexture;
 
 /*
@@ -61,7 +63,6 @@ bool TCSDL_Init(ScreenSurface screen, const char* title, bool fullScreen) {
   std::cout << "SDL_VIDEODRIVER selected : " << SDL_GetCurrentVideoDriver() << '\n';
 
   // Create the window
-  SDL_Window* window; 
   if(IS_NULL(window = SDL_CreateWindow(
                                 title, 
                                 SDL_WINDOWPOS_UNDEFINED,
@@ -116,6 +117,8 @@ bool TCSDL_Init(ScreenSurface screen, const char* title, bool fullScreen) {
                                 height))) {
       printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
       return false;
+    } else {
+      surface = SDL_GetWindowSurface(window);
     }
   }
   // Get pixel format struct 
@@ -183,6 +186,8 @@ void TCSDL_Present() {
     SDL_RenderPresent(renderer);
     // Clears the entire rendering targe
     SDL_RenderClear(renderer);
+  } else {
+    SDL_UpdateWindowSurface(window);
   }
 }
 
