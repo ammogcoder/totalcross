@@ -15,6 +15,7 @@
 
 static SDL_Renderer *renderer;
 static SDL_Texture *texture;
+static bool usesTexture;
 
 /*
  * Init steps to create a window and texture to Skia handling
@@ -103,15 +104,19 @@ bool TCSDL_Init(ScreenSurface screen, const char* title, bool fullScreen) {
   }
   std::cout << "SDL_RENDER_DRIVER selected : " << rendererInfo.name << '\n';
   
-  // MUST USE SDL_TEXTUREACCESS_STREAMING, CANNOT BE REPLACED WITH SDL_CreateTextureFromSurface
-  if (IS_NULL(texture = SDL_CreateTexture(
-                              renderer, 
-                              windowPixelFormat, 
-                              SDL_TEXTUREACCESS_STREAMING, 
-                              width, 
-                              height))) {
-    printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
-    return false;
+  usesTexture = std::string(rendererInfo.name).compare(std::string("software"));
+
+  if(usesTexture) {
+    // MUST USE SDL_TEXTUREACCESS_STREAMING, CANNOT BE REPLACED WITH SDL_CreateTextureFromSurface
+    if (IS_NULL(texture = SDL_CreateTexture(
+                                renderer, 
+                                windowPixelFormat, 
+                                SDL_TEXTUREACCESS_STREAMING, 
+                                width, 
+                                height))) {
+      printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
+      return false;
+    }
   }
   // Get pixel format struct 
   SDL_PixelFormat *pixelformat;
@@ -159,8 +164,10 @@ bool TCSDL_Init(ScreenSurface screen, const char* title, bool fullScreen) {
  * depends on it
  */
 void TCSDL_UpdateTexture(int w, int h, int pitch, void *pixels) {
-  // Update the given texture rectangle with new pixel data.
-  SDL_UpdateTexture(texture, NULL, pixels, pitch);
+  if(usesTexture) {
+    // Update the given texture rectangle with new pixel data.
+    SDL_UpdateTexture(texture, NULL, pixels, pitch);
+  }
   // Call SDL render present
   TCSDL_Present();
 }
@@ -169,12 +176,14 @@ void TCSDL_UpdateTexture(int w, int h, int pitch, void *pixels) {
  * Update the screen with rendering performed
  */
 void TCSDL_Present() {
-  // Copy a portion of the texture to the current rendering target
-  SDL_RenderCopy(renderer, texture, NULL, NULL);
-  // Update the screen with rendering performed
-  SDL_RenderPresent(renderer);
-  // Clears the entire rendering targe
-  SDL_RenderClear(renderer);
+  if(usesTexture) {
+    // Copy a portion of the texture to the current rendering target
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    // Update the screen with rendering performed
+    SDL_RenderPresent(renderer);
+    // Clears the entire rendering targe
+    SDL_RenderClear(renderer);
+  }
 }
 
 /*
